@@ -1,0 +1,72 @@
+services:
+  # --- Main Application Service ---
+  aac-onlyoffice:
+    image: "onlyoffice/documentserver:10.0"
+    container_name: "aac-onlyoffice"
+    hostname: "office"
+    restart: "always"
+
+
+    environment:
+      TZ: "Europe/Berlin"
+      JWT_HEADER: "Authorization"
+      ONLYOFFICE_HTTPS_HSTS_ENABLED: "false"
+      ALLOW_PRIVATE_IP_ADDRESS: "true"
+      ONLYOFFICE_FORCESAVETOKEN_HOST: "${ONLYOFFICE_FORCESAVETOKEN_HOST:?set ONLYOFFICE_FORCESAVETOKEN_HOST in .env (see .env.example)}"
+      PGID: "1000"
+      PUID: "1000"
+      JWT_ENABLED: "true"
+      JWT_SECRET: "${JWT_SECRET:?set JWT_SECRET in .env (see .env.example)}"
+      USE_UNAUTHORIZED_STORAGE: "true"
+
+    ports:
+      - "12888:80/tcp"
+
+    volumes:
+      - "/export/docker/aac-onlyoffice/logs:/var/log/onlyoffice"
+      - "/export/docker/aac-onlyoffice/data:/var/www/onlyoffice/Data"
+      - "/export/docker/aac-onlyoffice/lib:/var/lib/onlyoffice"
+      - "/export/docker/aac-onlyoffice/db:/var/lib/postgresql"
+
+    networks:
+      - exposed
+      - interconnect
+      - secured
+      - stack_internal
+
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.aac-onlyoffice.rule: "Host(`office.example.com`)"
+      traefik.http.routers.aac-onlyoffice.entrypoints: "websecure"
+      traefik.http.routers.aac-onlyoffice.tls: "true"
+      traefik.http.routers.aac-onlyoffice.tls.certresolver: "ionos"
+      traefik.docker.network: "services-secured"
+      traefik.http.services.aac-onlyoffice.loadbalancer.server.port: "80"
+      traefik.http.services.aac-onlyoffice.loadbalancer.server.scheme: "http"
+      auto-dns.createWildcard.aac-onlyoffice: "false"
+      auto-dns.customDNS.aac-onlyoffice: "true"
+      auto-dns.customDOMAIN.aac-onlyoffice: "example.com"
+      auto-dns.customHost.aac-onlyoffice: "office"
+      homepage.group: "Backend - Services"
+      homepage.name: "OnlyOffice Docs"
+      homepage.href: "https://office.example.com"
+      homepage.icon: "onlyoffice.png"
+      homepage.description: "A secure online office suite that enables you to manage and edit documents, spreadsheets, and presentations."
+
+
+
+
+networks:
+  secured:
+    name: "services-secured"
+    external: true
+  exposed:
+    name: "services-exposed"
+    external: true
+  interconnect:
+    name: "docker-default"
+    external: true
+  stack_internal:
+    name: "aac-onlyoffice_stack_internal"
+    driver: "bridge"
+

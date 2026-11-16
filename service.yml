@@ -1,0 +1,91 @@
+service:
+  name: aac-onlyoffice
+  friendly_name: OnlyOffice Docs
+  image_repo: onlyoffice/documentserver
+  image_tag: 10.0
+  description: A secure online office suite that enables you to manage and edit documents,
+    spreadsheets, and presentations.
+  icon: onlyoffice.png
+  category: Backend - Services
+  stage: prod
+  hostname: office
+ports:
+- name: http
+  port: 80
+  external_port: 12888
+config:
+  domain_name: example.com
+  generate_hostname: false
+  integrations:
+    homepage:
+      enabled: true
+    autodns:
+      enabled: true
+      create_wildcard: false
+    traefik:
+      enabled: true
+      cert_resolver: ionos
+      entrypoint: websecure
+      service_scheme: http
+      service_port: 80
+  schema_version: 2
+volumes:
+  logs:
+    description: Stores OnlyOffice Docs log files.
+  data:
+    description: Stores certificates and other application data.
+  lib:
+    description: Stores file cache and other library data.
+  db:
+    description: Stores the internal PostgreSQL database.
+deployment_strategy:
+  main:
+    enabled: true
+    target_stage: prod
+  dev:
+    enabled: true
+    target_stage: dev
+  test:
+    enabled: false
+    target_stage: test
+  ansible-dev:
+    enabled: true
+    target_stage: dev
+  iac-dev:
+    enabled: true
+    target_stage: dev
+  template-dev:
+    enabled: true
+    target_stage: dev
+deployments:
+  docker_compose:
+    restart_policy: always
+    host_base_path: /export/docker
+    volumes:
+    - logs:/var/log/onlyoffice
+    - data:/var/www/onlyoffice/Data
+    - lib:/var/lib/onlyoffice
+    - db:/var/lib/postgresql
+    environment:
+      TZ: '{{ vars.TZ }}'
+      JWT_HEADER: '{{ vars.JWT_HEADER }}'
+      ONLYOFFICE_HTTPS_HSTS_ENABLED: '{{ vars.ONLYOFFICE_HTTPS_HSTS_ENABLED }}'
+      ALLOW_PRIVATE_IP_ADDRESS: '{{ vars.ALLOW_PRIVATE_IP_ADDRESS }}'
+      ONLYOFFICE_FORCESAVETOKEN_HOST: '{{ secrets.ONLYOFFICE_FORCESAVETOKEN_HOST }}'
+      PGID: '{{ vars.PGID }}'
+      PUID: '{{ vars.PUID }}'
+      JWT_ENABLED: '{{ vars.JWT_ENABLED }}'
+      JWT_SECRET: '{{ secrets.JWT_SECRET }}'
+      USE_UNAUTHORIZED_STORAGE: '{{ vars.USE_UNAUTHORIZED_STORAGE }}'
+vars:
+  TZ: Europe/Berlin
+  JWT_HEADER: Authorization
+  ONLYOFFICE_HTTPS_HSTS_ENABLED: 'false'
+  ALLOW_PRIVATE_IP_ADDRESS: 'true'
+  PGID: '1000'
+  PUID: '1000'
+  JWT_ENABLED: 'true'
+  USE_UNAUTHORIZED_STORAGE: 'true'
+secrets:
+  ONLYOFFICE_FORCESAVETOKEN_HOST: CHANGE_ME
+  JWT_SECRET: CHANGE_ME
